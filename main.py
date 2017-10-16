@@ -18,6 +18,7 @@ SPEED = 20
 # keep looping
 while True:
     ret, frame = camera.read()
+    frame = cv2.flip(frame,1)
     flag  = False
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
@@ -58,7 +59,7 @@ while True:
             (dirX, dirY) = ("", "")
             # ensure there is significant movement in the
             # x-direction
-            if np.abs(dX) > 40:
+            if np.abs(dX) > 10:
                 dirX = "Left" if np.sign(dX) == 1 else "Right"
                 if flag:
                     if dX > 0:
@@ -68,7 +69,7 @@ while True:
                     pt.moveRel(s ,0)
             # ensure there is significant movement in the
             # y-direction
-            if np.abs(dY) > 20:
+            if np.abs(dY) > 10:
                 dirY = "Up" if np.sign(dY) == 1 else "Down"
                 if flag:
                     if dY>0:s=-SPEED
@@ -86,7 +87,7 @@ while True:
         # draw the connecting lines
         thickness = int(np.sqrt(DEQUE_MAX_LEN / float(i + 1)) * 1.5)
         cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
-        break
+
         # show the movement deltas and the direction of movement on
         # the frame
     cv2.putText(frame, direction, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,

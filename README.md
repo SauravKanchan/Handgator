@@ -8,5 +8,6 @@ Navigating desktop with hand gesture
    pip install requirements.txt
    python main.py
 ```
-⋅⋅⋅It is advised to use a plain background⋅⋅
+>It is advised to use a plain background
+
 

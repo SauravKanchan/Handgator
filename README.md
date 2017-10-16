@@ -10,3 +10,8 @@
    pip install -r requirements.txt
    python main.py
 ```
+if pip install -r requirements.txt did not worked try
+```powershell
+   pip install -r requirements_new.txt
+```
+

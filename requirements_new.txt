@@ -1,0 +1,8 @@
+opencv_python-3.3.0-cp36-cp36m-win32.whl
+numpy==1.13.3
+olefile==0.44
+Pillow==4.3.0
+PyAutoGUI==0.9.36
+PyMsgBox==1.0.6
+PyScreeze==0.1.13
+PyTweening==1.0.3

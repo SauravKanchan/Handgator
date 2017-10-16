@@ -2,9 +2,8 @@ from collections import deque
 import numpy as np
 import cv2
 import pyautogui as pt
-
+pt.FAILSAFE = False
 handCascade = cv2.CascadeClassifier("hand.xml")
-SPEED = 7
 
 # initialize the list of tracked points, the frame counter,
 # and the coordinate deltas
@@ -57,13 +56,13 @@ while True:
             (dirX, dirY) = ("", "")
             # ensure there is significant movement in the
             # x-direction
-            if np.abs(dX) > 50:
-                dirX = "East" if np.sign(dX) == 1 else "West"
+            if np.abs(dX) > 20:
+                dirX = "Left" if np.sign(dX) == 1 else "Right"
                 pt.moveRel(-dX//6 ,0)
             # ensure there is significant movement in the
             # y-direction
             if np.abs(dY) > 50:
-                dirY = "North" if np.sign(dY) == 1 else "South"
+                dirY = "Up" if np.sign(dY) == 1 else "Down"
                 pt.moveRel(0, -dY//6)
             # handle when both directions are non-empty
             if dirX != "" and dirY != "":

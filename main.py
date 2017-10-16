@@ -7,7 +7,8 @@ handCascade = cv2.CascadeClassifier("hand.xml")
 
 # initialize the list of tracked points, the frame counter,
 # and the coordinate deltas
-pts = deque(maxlen=32)
+DEQUE_MAX_LEN =32
+pts = deque(maxlen=DEQUE_MAX_LEN)
 counter = 0
 (dX, dY) = (0, 0)
 direction = ""
@@ -16,7 +17,7 @@ camera = cv2.VideoCapture(0)
 # keep looping
 while True:
     ret, frame = camera.read()
-
+    flag  = False
     gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
     hands = handCascade.detectMultiScale(
@@ -31,9 +32,9 @@ while True:
     for (x, y, w, h) in hands:
         cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
         center = (x+w//2, y+h//2)
-        # only proceed if the radius meets a minimum size
-        # draw the circle and centroid on the frame,
-        # then update the list of tracked points
+
+        flag = True
+
         cv2.circle(frame, center, 5, (0, 0, 255), -1)
         pts.appendleft(center)
 
@@ -58,7 +59,7 @@ while True:
             # x-direction
             if np.abs(dX) > 40:
                 dirX = "Left" if np.sign(dX) == 1 else "Right"
-                pt.moveRel(-dX//6 ,0)
+                if flag:pt.moveRel(-dX//6 ,0)
             # ensure there is significant movement in the
             # y-direction
             if np.abs(dY) > 20:
@@ -74,7 +75,7 @@ while True:
 
         # otherwise, compute the thickness of the line and
         # draw the connecting lines
-        thickness = int(np.sqrt(32 / float(i + 1)) * 2.5)
+        thickness = int(np.sqrt(DEQUE_MAX_LEN / float(i + 1)) * 1.5)
         cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
 
         # show the movement deltas and the direction of movement on

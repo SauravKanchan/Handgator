@@ -13,6 +13,7 @@ counter = 0
 (dX, dY) = (0, 0)
 direction = ""
 camera = cv2.VideoCapture(0)
+SPEED = 20
 
 # keep looping
 while True:
@@ -59,12 +60,20 @@ while True:
             # x-direction
             if np.abs(dX) > 40:
                 dirX = "Left" if np.sign(dX) == 1 else "Right"
-                if flag:pt.moveRel(-dX//6 ,0)
+                if flag:
+                    if dX > 0:
+                        s = -SPEED
+                    else:
+                        s = SPEED
+                    pt.moveRel(s ,0)
             # ensure there is significant movement in the
             # y-direction
             if np.abs(dY) > 20:
                 dirY = "Up" if np.sign(dY) == 1 else "Down"
-                pt.moveRel(0, -dY//6)
+                if flag:
+                    if dY>0:s=-SPEED
+                    else:s=SPEED
+                    pt.moveRel(0, s)
             # handle when both directions are non-empty
             if dirX != "" and dirY != "":
                 direction = "{}-{}".format(dirY, dirX)
@@ -77,7 +86,7 @@ while True:
         # draw the connecting lines
         thickness = int(np.sqrt(DEQUE_MAX_LEN / float(i + 1)) * 1.5)
         cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
-
+        break
         # show the movement deltas and the direction of movement on
         # the frame
     cv2.putText(frame, direction, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,

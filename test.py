@@ -6,7 +6,7 @@
 """
 import cv2
 
-handCascade = cv2.CascadeClassifier("palm.xml")
+handCascade = cv2.CascadeClassifier("test.xml")
 
 video_capture = cv2.VideoCapture(0)
 

@@ -56,12 +56,12 @@ while True:
             (dirX, dirY) = ("", "")
             # ensure there is significant movement in the
             # x-direction
-            if np.abs(dX) > 20:
+            if np.abs(dX) > 40:
                 dirX = "Left" if np.sign(dX) == 1 else "Right"
                 pt.moveRel(-dX//6 ,0)
             # ensure there is significant movement in the
             # y-direction
-            if np.abs(dY) > 50:
+            if np.abs(dY) > 20:
                 dirY = "Up" if np.sign(dY) == 1 else "Down"
                 pt.moveRel(0, -dY//6)
             # handle when both directions are non-empty

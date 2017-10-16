@@ -9,5 +9,3 @@ Navigating desktop with hand gesture
    pip install -r requirements.txt
    python main.py
 ```
-
-

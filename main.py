@@ -1,145 +1,97 @@
-import cv2
+from collections import deque
 import numpy as np
-import math
+import cv2
 import pyautogui as pt
 
-cap = cv2.VideoCapture(0)
-while (cap.isOpened()):
-    # read image
-    ret, img = cap.read()
+handCascade = cv2.CascadeClassifier("hand.xml")
+SPEED = 7
 
-    hand_x_co_ordinate = 50
-    hand_y_co_ordinate = 50
+# initialize the list of tracked points, the frame counter,
+# and the coordinate deltas
+pts = deque(maxlen=32)
+counter = 0
+(dX, dY) = (0, 0)
+direction = ""
+camera = cv2.VideoCapture(0)
 
-    # get hand data from the rectangle sub window on the screen
-    cv2.rectangle(img, (300, 300), (hand_x_co_ordinate, hand_y_co_ordinate), (0, 255, 0), 0)
-    crop_img = img[hand_x_co_ordinate:300, hand_y_co_ordinate:300];
+# keep looping
+while True:
+    ret, frame = camera.read()
 
-    # convert to grayscale
-    grey = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
+    gray = cv2.cvtColor(frame, cv2.COLOR_BGR2GRAY)
 
-    # applying gaussian blur
-    value = (35, 35)
-    blurred = cv2.GaussianBlur(grey, value, 0)
+    hands = handCascade.detectMultiScale(
+        gray,
+        scaleFactor=1.1,
+        minNeighbors=5,
+        minSize=(30, 30),
+        flags=cv2.CASCADE_SCALE_IMAGE
+    )
+    # Draw a rectangle around the hands
 
-    # thresholdin: Otsu's Binarization method
-    _, thresh1 = cv2.threshold(blurred, 127, 255,
-                               cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
+    for (x, y, w, h) in hands:
+        cv2.rectangle(frame, (x, y), (x + w, y + h), (0, 255, 0), 2)
+        center = (x+w//2, y+h//2)
+        # only proceed if the radius meets a minimum size
+        # draw the circle and centroid on the frame,
+        # then update the list of tracked points
+        cv2.circle(frame, center, 5, (0, 0, 255), -1)
+        pts.appendleft(center)
 
-    # show thresholded image
-    # cv2.imshow('Thresholded', thresh1)
+    # loop over the set of tracked points
+    for i in np.arange(1, len(pts)):
+        # if either of the tracked points are None, ignore
+        # them
+        if pts[i - 1] is None or pts[i] is None:
+            continue
 
-    # check OpenCV version to avoid unpacking error
-    (version, _, _) = cv2.__version__.split('.')
+        # check to see if enough points have been accumulated in
+        # the buffer
 
-    if version == '3':
-        image, contours, hierarchy = cv2.findContours(thresh1.copy(), \
-                                                      cv2.RETR_TREE, cv2.CHAIN_APPROX_NONE)
-    elif version == '2':
-        contours, hierarchy = cv2.findContours(thresh1.copy(), cv2.RETR_TREE, \
-                                               cv2.CHAIN_APPROX_NONE)
+        if counter >= 10 and i == 1 and pts[-1] is not None:
+            # compute the difference between the x and y
+            # coordinates and re-initialize the direction
+            # text variables
+            dX = pts[-1][0] - pts[i][0]
+            dY = pts[-1][1] - pts[i][1]
+            (dirX, dirY) = ("", "")
+            # ensure there is significant movement in the
+            # x-direction
+            if np.abs(dX) > 50:
+                dirX = "East" if np.sign(dX) == 1 else "West"
+                pt.moveRel(-dX//6 ,0)
+            # ensure there is significant movement in the
+            # y-direction
+            if np.abs(dY) > 50:
+                dirY = "North" if np.sign(dY) == 1 else "South"
+                pt.moveRel(0, -dY//6)
+            # handle when both directions are non-empty
+            if dirX != "" and dirY != "":
+                direction = "{}-{}".format(dirY, dirX)
 
-    # find contour with max area
-    cnt = max(contours, key=lambda x: cv2.contourArea(x))
+            # otherwise, only one direction is non-empty
+            else:
+                direction = dirX if dirX != "" else dirY
 
-    # create bounding rectangle around the contour (can skip below two lines)
-    x, y, w, h = cv2.boundingRect(cnt)
-    cv2.rectangle(crop_img, (x, y), (x + w, y + h), (0, 0, 255), 0)
+        # otherwise, compute the thickness of the line and
+        # draw the connecting lines
+        thickness = int(np.sqrt(32 / float(i + 1)) * 2.5)
+        cv2.line(frame, pts[i - 1], pts[i], (0, 0, 255), thickness)
 
-    # finding convex hull
-    hull = cv2.convexHull(cnt)
+        # show the movement deltas and the direction of movement on
+        # the frame
+    cv2.putText(frame, direction, (10, 30), cv2.FONT_HERSHEY_SIMPLEX,
+                0.65, (0, 0, 255), 3)
+    cv2.putText(frame, "dx: {}, dy: {}".format(dX, dY),
+                (10, frame.shape[0] - 10), cv2.FONT_HERSHEY_SIMPLEX,
+                0.35, (0, 0, 255), 1)
 
-    # drawing contours
-    drawing = np.zeros(crop_img.shape, np.uint8)
-    cv2.drawContours(drawing, [cnt], 0, (0, 255, 0), 0)
-    cv2.drawContours(drawing, [hull], 0, (0, 0, 255), 0)
-
-    # finding convex hull
-    hull = cv2.convexHull(cnt, returnPoints=False)
-
-    # finding convexity defects
-    defects = cv2.convexityDefects(cnt, hull)
-    count_defects = 0
-    cv2.drawContours(thresh1, contours, -1, (0, 255, 0), 3)
-
-    # applying Cosine Rule to find angle for all defects (between fingers)
-    # with angle > 90 degrees and ignore defects
-    for i in range(defects.shape[0]):
-        s, e, f, d = defects[i, 0]
-
-        start = tuple(cnt[s][0])
-        end = tuple(cnt[e][0])
-        far = tuple(cnt[f][0])
-
-        # find length of all sides of triangle
-        a = math.sqrt((end[0] - start[0]) ** 2 + (end[1] - start[1]) ** 2)
-        b = math.sqrt((far[0] - start[0]) ** 2 + (far[1] - start[1]) ** 2)
-        c = math.sqrt((end[0] - far[0]) ** 2 + (end[1] - far[1]) ** 2)
-
-        # apply cosine rule here
-        angle = math.acos((b ** 2 + c ** 2 - a ** 2) / (2 * b * c)) * 57
-
-        # ignore angles > 90 and highlight rest with red dots
-        if angle <= 90:
-            count_defects += 1
-            cv2.circle(crop_img, far, 1, [0, 0, 255], -1)
-        # dist = cv2.pointPolygonTest(cnt,far,True)
-
-        # draw a line from start to end i.e. the convex points (finger tips)
-        # (can skip this part)
-        cv2.line(crop_img, start, end, [0, 255, 0], 2)
-        # cv2.circle(crop_img,far,5,[0,0,255],-1)
-
-    speed = 10
-    # define actions required
-    cv2.putText(img, "2->up;3->down;->4->left;5->right",
-                (0, 450),
-                cv2.FONT_HERSHEY_SIMPLEX,
-                1,
-                (0, 0, 255),
-                2)
-    if count_defects == 1:
-        cv2.putText(img, "Moving up",
-                    (0, 25),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (255, 0, 0),
-                    2)
-        pt.moveRel(0, -speed)
-    elif count_defects == 2:
-        cv2.putText(img, "Moving down",
-                    (0, 25),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 255, 255),
-                    2)
-        pt.moveRel(0, speed)
-    elif count_defects == 3:
-        cv2.putText(img, "Moving Left",
-                    (0, 25),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 255),
-                    2)
-        pt.moveRel(-speed, 0)
-    elif count_defects == 4:
-        cv2.putText(img, "Moving Right",
-                    (0, 25),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (32, 32, 32),
-                    2)
-        pt.moveRel(speed, 0)
-    else:
-        pass
-    # show appropriate images in windows
-    cv2.imshow('Gesture', img)
-    all_img = np.hstack((drawing, crop_img))
-    # cv2.imshow('Contours', all_img)
-
-    k = cv2.waitKey(10)
-    if k == 27:
-        break
-
-cap.release()
+    # show the frame to our screen and increment the frame counter
+    cv2.imshow("Frame", frame)
+    key = cv2.waitKey(1) & 0xFF
+    counter += 1
+    # if the 'q' key is pressed, stop the loop
+    if key == ord("q"):
+        break  # cleanup the camera and close any open windows
+camera.release()
 cv2.destroyAllWindows()

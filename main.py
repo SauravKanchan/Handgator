@@ -8,9 +8,12 @@ while (cap.isOpened()):
     # read image
     ret, img = cap.read()
 
+    hand_x_co_ordinate = 50
+    hand_y_co_ordinate = 50
+
     # get hand data from the rectangle sub window on the screen
-    cv2.rectangle(img, (300, 300), (100, 100), (0, 255, 0), 0)
-    crop_img = img[100:300, 100:300]
+    cv2.rectangle(img, (300, 300), (hand_x_co_ordinate, hand_y_co_ordinate), (0, 255, 0), 0)
+    crop_img = img[hand_x_co_ordinate:300, hand_y_co_ordinate:300];
 
     # convert to grayscale
     grey = cv2.cvtColor(crop_img, cv2.COLOR_BGR2GRAY)
@@ -24,7 +27,7 @@ while (cap.isOpened()):
                                cv2.THRESH_BINARY_INV + cv2.THRESH_OTSU)
 
     # show thresholded image
-    cv2.imshow('Thresholded', thresh1)
+    # cv2.imshow('Thresholded', thresh1)
 
     # check OpenCV version to avoid unpacking error
     (version, _, _) = cv2.__version__.split('.')
@@ -87,7 +90,14 @@ while (cap.isOpened()):
         cv2.line(crop_img, start, end, [0, 255, 0], 2)
         # cv2.circle(crop_img,far,5,[0,0,255],-1)
 
+    speed = 10
     # define actions required
+    cv2.putText(img, "2->up;3->down;->4->left;5->right",
+                (0, 450),
+                cv2.FONT_HERSHEY_SIMPLEX,
+                1,
+                (0, 0, 255),
+                2)
     if count_defects == 1:
         cv2.putText(img, "Moving up",
                     (0, 25),
@@ -95,7 +105,7 @@ while (cap.isOpened()):
                     1,
                     (255, 0, 0),
                     2)
-        pt.moveRel(0, -2)
+        pt.moveRel(0, -speed)
     elif count_defects == 2:
         cv2.putText(img, "Moving down",
                     (0, 25),
@@ -103,7 +113,7 @@ while (cap.isOpened()):
                     1,
                     (0, 255, 255),
                     2)
-        pt.moveRel(0, 2)
+        pt.moveRel(0, speed)
     elif count_defects == 3:
         cv2.putText(img, "Moving Left",
                     (0, 25),
@@ -111,7 +121,7 @@ while (cap.isOpened()):
                     1,
                     (0, 0, 255),
                     2)
-        pt.moveRel(-2, 0)
+        pt.moveRel(-speed, 0)
     elif count_defects == 4:
         cv2.putText(img, "Moving Right",
                     (0, 25),
@@ -119,14 +129,9 @@ while (cap.isOpened()):
                     1,
                     (32, 32, 32),
                     2)
-        pt.moveRel(2, 0)
+        pt.moveRel(speed, 0)
     else:
-        cv2.putText(img, "2->up;3->down;->4->left;5->right",
-                    (0, 25),
-                    cv2.FONT_HERSHEY_SIMPLEX,
-                    1,
-                    (0, 0, 255),
-                    2)
+        pass
     # show appropriate images in windows
     cv2.imshow('Gesture', img)
     all_img = np.hstack((drawing, crop_img))
@@ -135,3 +140,6 @@ while (cap.isOpened()):
     k = cv2.waitKey(10)
     if k == 27:
         break
+
+cap.release()
+cv2.destroyAllWindows()

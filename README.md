@@ -14,4 +14,9 @@ if pip install -r requirements.txt did not worked try
 ```powershell
    pip install -r requirements_new.txt
 ```
+<video>
 
+<video width="684" height="384" loop autoplay>
+  <source src="media/handgator.p4" type="video/mp4">
+  Your browser does not support the video tag.
+</video>

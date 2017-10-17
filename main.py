@@ -61,20 +61,12 @@ while True:
             # x-direction
             if np.abs(dX) > 10:
                 dirX = "Left" if np.sign(dX) == 1 else "Right"
-                if flag:
-                    if dX > 0:
-                        s = -SPEED
-                    else:
-                        s = SPEED
-                    pt.moveRel(s ,0)
+
             # ensure there is significant movement in the
             # y-direction
             if np.abs(dY) > 10:
                 dirY = "Up" if np.sign(dY) == 1 else "Down"
-                if flag:
-                    if dY>0:s=-SPEED
-                    else:s=SPEED
-                    pt.moveRel(0, s)
+
             # handle when both directions are non-empty
             if dirX != "" and dirY != "":
                 direction = "{}-{}".format(dirY, dirX)
@@ -82,7 +74,18 @@ while True:
             # otherwise, only one direction is non-empty
             else:
                 direction = dirX if dirX != "" else dirY
+            if flag:
+                if dX > 0:
+                    s = -SPEED
+                else:
+                    s = SPEED
+                pt.moveRel(s, 0)
 
+                if dY > 0:
+                    s = -SPEED
+                else:
+                    s = SPEED
+                pt.moveRel(0, s)
         # otherwise, compute the thickness of the line and
         # draw the connecting lines
         thickness = int(np.sqrt(DEQUE_MAX_LEN / float(i + 1)) * 1.5)

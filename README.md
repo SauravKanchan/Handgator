@@ -14,4 +14,3 @@ if pip install -r requirements.txt did not worked try
 ```powershell
    pip install -r requirements_new.txt
 ```
-[![IMAGE ALT TEXT](https://img.youtube.com/vi/_6_jG17mAU4/0.jpg)](https://youtu.be/_6_jG17mAU4)
